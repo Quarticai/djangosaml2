@@ -54,13 +54,12 @@ def get_config_loader(path, request=None):
 
 
 def config_map(data):
-    
     config = {
         # full path to the xmlsec1 binary programm
         'xmlsec_binary': '/usr/bin/xmlsec1',
 
         # your entity id, usually your subdomain plus the url to the metadata view
-        'entityid': str(data.idp_entity),
+        'entityid': data.idp_entity,
 
         # directory with attribute mapping
         "attribute_map_dir": str(data.attributes_dir),
@@ -70,7 +69,7 @@ def config_map(data):
             # we are just a lonely SP
             'sp': {
                 # 'name': 'Federated Django sample SP',
-                'name_id_format': getattr(saml2.saml, str(data.name_id_format),
+                'name_id_format': getattr(saml2.saml, data.name_id_format,
                                           saml2.saml.NAMEID_FORMAT_UNSPECIFIED),
 
                 # For Okta add signed logout requets. Enable this:
@@ -80,15 +79,15 @@ def config_map(data):
                     # url and binding to the assertion consumer service view
                     # do not change the binding or service name
                     'assertion_consumer_service': [
-                        (str(data.acs_uri),
+                        (data.acs_uri,
                         saml2.BINDING_HTTP_POST),
                     ],
                     # url and binding to the single logout service view
                     # do not change the binding or service name
                     'single_logout_service': [
-                        (str(data.single_logout_service_uri_redirect),
+                        (data.single_logout_service_uri_redirect,
                         saml2.BINDING_HTTP_REDIRECT),
-                        (str(data.single_logout_service_uri_post),
+                        (data.single_logout_service_uri_post,
                         saml2.BINDING_HTTP_POST),
                     ],
                 },
@@ -126,7 +125,7 @@ def config_settings_loader(request=None):
     saml_config_list = list(SamlConfig.objects.all())
 
     # conf.load(copy.deepcopy(settings.SAML_CONFIG))
-    saml_config = config_map(saml_config_list[0].values)
+    saml_config = config_map(saml_config_list[0])
     conf.load(saml_config)
     return conf
 
