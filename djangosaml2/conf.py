@@ -62,7 +62,7 @@ def config_map(data):
         'entityid': data.idp_entity,
 
         # directory with attribute mapping
-        "attribute_map_dir": str(data.attributes_dir),
+        "attribute_map_dir": data.attributes_dir.name,
 
         # this block states what services we provide
         'service': {
@@ -97,19 +97,19 @@ def config_map(data):
         # where the remote metadata is stored, local, remote or mdq server.
         # One metadatastore or many ...
         'metadata': {
-            'local': [str(data.metadata_file)],
+            'local': [data.metadata_file.name],
         },
 
         'debug': 1,
 
         # Signing
-        'key_file': str(data.sp_key_file),  # private part
-        'cert_file': str(data.sp_certificate_file),  # public part
+        'key_file': data.sp_key_file.name,  # private part
+        'cert_file': data.sp_certificate_file.name,  # public part
 
         # Encryption
         'encryption_keypairs': [{
-            'key_file': str(data.sp_key_file),  # private part
-            'cert_file': str(data.sp_certificate_file),  # public part
+            'key_file': data.sp_key_file.name,  # private part
+            'cert_file': data.sp_certificate_file.name,  # public part
         }]
     }
     
@@ -123,9 +123,10 @@ def config_settings_loader(request=None):
     """
     conf = saml2.config.SPConfig()
     saml_config_list = list(SamlConfig.objects.all())
-
-    # conf.load(copy.deepcopy(settings.SAML_CONFIG))
     saml_config = config_map(saml_config_list[0])
+    
+    # conf.load(copy.deepcopy(settings.SAML_CONFIG))
+    # loading configuration from db instead of settings.py file
     conf.load(saml_config)
     return conf
 
