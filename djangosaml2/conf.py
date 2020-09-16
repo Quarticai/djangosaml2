@@ -54,7 +54,7 @@ def get_config_loader(path, request=None):
 
 
 def config_map(data):
-    config = {
+    return {
         # full path to the xmlsec1 binary programm
         'xmlsec_binary': '/usr/bin/xmlsec1',
 
@@ -112,8 +112,6 @@ def config_map(data):
             'cert_file': data.sp_certificate_file.name,  # public part
         }]
     }
-    
-    return config
 
 
 def config_settings_loader(request=None):
