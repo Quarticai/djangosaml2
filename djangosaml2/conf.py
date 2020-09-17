@@ -54,6 +54,10 @@ def get_config_loader(path, request=None):
 
 
 def config_map(data):
+    """Maps the pysaml2 configuration keys to db values.
+
+    Returns a dict containing the pysaml2 configuration for the loader.
+    """
     return {
         # full path to the xmlsec1 binary programm
         'xmlsec_binary': '/usr/bin/xmlsec1',
@@ -120,8 +124,8 @@ def config_settings_loader(request=None):
     This is also the default config loader.
     """
     conf = saml2.config.SPConfig()
-    saml_config_list = list(SamlConfig.objects.all())
-    saml_config = config_map(saml_config_list[0])
+    saml_config_data = SamlConfig.objects.first()
+    saml_config = config_map(saml_config_data)
     
     # conf.load(copy.deepcopy(settings.SAML_CONFIG))
     # loading configuration from db instead of settings.py file
