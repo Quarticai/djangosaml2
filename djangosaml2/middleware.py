@@ -40,33 +40,33 @@ class SamlSessionMiddleware(SessionMiddleware):
         else:
             if accessed:
                 patch_vary_headers(response, ('Cookie',))
-            # relies and the global one
-            if (modified or settings.SESSION_SAVE_EVERY_REQUEST) and not empty:
-                if request.saml_session.get_expire_at_browser_close():
-                    max_age = None
-                    expires = None
-                else:
-                    max_age = request.saml_session.get_expiry_age()
-                    expires_time = time.time() + max_age
-                    expires = http_date(expires_time)
-                # Save the session data and refresh the client cookie.
-                # Skip session save for 500 responses, refs #3881.
-                if response.status_code != 500:
-                    try:
-                        request.saml_session.save()
-                    except UpdateError:
-                        raise SuspiciousOperation(
-                            "The request's session was deleted before the "
-                            "request completed. The user may have logged "
-                            "out in a concurrent request, for example."
-                        )
-                    response.set_cookie(
-                        self.cookie_name,
-                        request.saml_session.session_key,
-                        max_age=max_age,
-                        expires=expires, domain=settings.SESSION_COOKIE_DOMAIN,
-                        path=settings.SESSION_COOKIE_PATH,
-                        secure=settings.SESSION_COOKIE_SECURE or None,
-                        httponly=settings.SESSION_COOKIE_HTTPONLY or None,
+        # relies and the global one
+        if (modified or settings.SESSION_SAVE_EVERY_REQUEST) and not empty:
+            if request.saml_session.get_expire_at_browser_close():
+                max_age = None
+                expires = None
+            else:
+                max_age = request.saml_session.get_expiry_age()
+                expires_time = time.time() + max_age
+                expires = http_date(expires_time)
+            # Save the session data and refresh the client cookie.
+            # Skip session save for 500 responses, refs #3881.
+            if response.status_code != 500:
+                try:
+                    request.saml_session.save()
+                except UpdateError:
+                    raise SuspiciousOperation(
+                        "The request's session was deleted before the "
+                        "request completed. The user may have logged "
+                        "out in a concurrent request, for example."
                     )
+                response.set_cookie(
+                    self.cookie_name,
+                    request.saml_session.session_key,
+                    max_age=max_age,
+                    expires=expires, domain=settings.SESSION_COOKIE_DOMAIN,
+                    path=settings.SESSION_COOKIE_PATH,
+                    secure=settings.SESSION_COOKIE_SECURE or None,
+                    httponly=settings.SESSION_COOKIE_HTTPONLY or None,
+                )
         return response
