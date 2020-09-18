@@ -29,6 +29,6 @@ version:
 	@echo $(VERSION)
 
 publish: override VERSION := $(if $(VERSION),$(VERSION),)
-publish: WHEEL_FILENAME := djangosaml2-$(VERSION)-py2.py3-$(OS)-$(CPU_ARCH).whl
+publish: WHEEL_FILENAME := djangosaml2-$(VERSION)-py3-$(OS)-$(CPU_ARCH).whl
 publish:
 	curl -F package=@dist/$(WHEEL_FILENAME) https://$(GEMFURY_AUTH_TOKEN)@push.fury.io/quartic-ai/
