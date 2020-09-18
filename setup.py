@@ -21,10 +21,12 @@ from setuptools import setup, find_packages
 def read(*rnames):
     return codecs.open(os.path.join(os.path.dirname(__file__), *rnames), encoding='utf-8').read()
 
+__version__ = None
+exec(open('djangosaml2/_version.py', 'r').read())
 
 setup(
     name='djangosaml2',
-    version='0.40.1',
+    version=__version__,
     description='pysaml2 integration for Django',
     long_description=read('README.rst'),
     classifiers=[
