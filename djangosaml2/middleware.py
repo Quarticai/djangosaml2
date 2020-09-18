@@ -35,7 +35,6 @@ class SamlSessionMiddleware(SessionMiddleware):
                 self.cookie_name,
                 path=settings.SESSION_COOKIE_PATH,
                 domain=settings.SESSION_COOKIE_DOMAIN,
-                # samesite=None,
             )
             patch_vary_headers(response, ('Cookie',))
         else:
@@ -69,6 +68,5 @@ class SamlSessionMiddleware(SessionMiddleware):
                         path=settings.SESSION_COOKIE_PATH,
                         secure=settings.SESSION_COOKIE_SECURE or None,
                         httponly=settings.SESSION_COOKIE_HTTPONLY or None,
-                        # samesite=None
                     )
         return response
