@@ -412,7 +412,7 @@ class AssertionConsumerServiceView(View):
 
 
 
-@login_required
+@login_required(login_url=settings.SAML_LOGIN_URL)
 def echo_attributes(request,
                     config_loader_path=None,
                     template='djangosaml2/echo_attributes.html'):
@@ -432,7 +432,7 @@ def echo_attributes(request,
     return render(request, template, {'attributes': identity[0]})
 
 
-@login_required
+@login_required(login_url=settings.SAML_LOGIN_URL)
 def logout(request, config_loader_path=None):
     """SAML Logout Request initiator
 
