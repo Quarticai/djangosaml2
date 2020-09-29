@@ -242,14 +242,11 @@ class Saml2Backend(ModelBackend):
             you might want to not send out this signal. In that case, just override this method to return False.
         """
         logger.debug('Sending the pre_save signal')
-        signal_modified = any(
-            [response for receiver, response
-             in pre_user_save.send_robust(sender=user.__class__,
-                                          instance=user,
-                                          attributes=attributes,
-                                          user_modified=user_modified)]
-            )
-        return signal_modified
+        return any(response for receiver, response
+                 in pre_user_save.send_robust(sender=user.__class__,
+                                              instance=user,
+                                              attributes=attributes,
+                                              user_modified=user_modified))
 
     # ############################################
     # Backwards-compatibility stubs
