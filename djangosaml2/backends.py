@@ -23,8 +23,8 @@ from django.contrib import auth
 from django.contrib.auth.backends import ModelBackend
 from django.core.exceptions import (ImproperlyConfigured,
                                     MultipleObjectsReturned)
-
 from .signals import pre_user_save
+from deming.models import OrganisationGroup, Client
 
 logger = logging.getLogger('djangosaml2')
 
@@ -120,7 +120,8 @@ class Saml2Backend(ModelBackend):
             logger.error('Request not authorized')
             return None
 
-        user_lookup_key, user_lookup_value = self._extract_user_identifier_params(session_info, attributes, attribute_mapping)
+        user_lookup_key, user_lookup_value = self._extract_user_identifier_params(session_info, attributes,
+                                                                                  attribute_mapping)
         if not user_lookup_value:
             logger.error('Could not determine user identifier')
             return None
@@ -219,8 +220,15 @@ class Saml2Backend(ModelBackend):
             logger.error("Multiple users match, model: %s, lookup: %s", UserModel._meta, user_query_args)
         except UserModel.DoesNotExist:
             # Create new one if desired by settings
+
+            org_group = OrganisationGroup.objects.first()
+
+            # TODO: Change the lookup key.
             if create_unknown_user:
-                user = UserModel(**{ user_lookup_key: user_lookup_value })
+                user = UserModel(**{ user_lookup_key: user_lookup_value,
+                                     'organisation_group': OrganisationGroup.objects.first(),
+                                     'client': org_group.client
+                                     })
                 created = True
                 logger.debug('New user created: %s', user)
             else:
