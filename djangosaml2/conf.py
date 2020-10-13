@@ -14,6 +14,7 @@
 # limitations under the License.
 
 import copy
+import os
 from importlib import import_module
 
 from django.conf import settings
@@ -23,6 +24,7 @@ import saml2
 from .utils import get_custom_setting
 
 from deming.models import SamlConfig
+from deming.constants_utils import ATTRIBUTES_MAP_FILENAME
 
 
 def get_config_loader(path, request=None):
@@ -58,15 +60,18 @@ def config_map(data):
 
     Returns a dict containing the pysaml2 configuration for the loader.
     """
+    HOME_DIR = os.environ.get('HOME', '')
+    BASE_DIR = os.path.join(HOME_DIR, settings.MEDIA_ROOT)
+    attribute_dir_path = data.attributes_dir.name.split(ATTRIBUTES_MAP_FILENAME)[0]
     return {
         # full path to the xmlsec1 binary programm
         'xmlsec_binary': '/usr/bin/xmlsec1',
 
         # your entity id, usually your subdomain plus the url to the metadata view
-        'entityid': data.idp_entity,
+        'entityid': data.sp_entity_id,
 
         # directory with attribute mapping
-        "attribute_map_dir": data.attributes_dir.name,
+        "attribute_map_dir": os.path.join(BASE_DIR, attribute_dir_path),
 
         # this block states what services we provide
         'service': {
@@ -101,19 +106,19 @@ def config_map(data):
         # where the remote metadata is stored, local, remote or mdq server.
         # One metadatastore or many ...
         'metadata': {
-            'local': [data.metadata_file.name],
+            'local': [os.path.join(BASE_DIR, data.metadata_file.name)],
         },
 
         'debug': 1,
 
         # Signing
-        'key_file': data.sp_key_file.name,  # private part
-        'cert_file': data.sp_certificate_file.name,  # public part
+        'key_file': os.path.join(BASE_DIR, data.sp_key_file.name),  # private part
+        'cert_file': os.path.join(BASE_DIR, data.sp_certificate_file.name),  # public part
 
         # Encryption
         'encryption_keypairs': [{
-            'key_file': data.sp_key_file.name,  # private part
-            'cert_file': data.sp_certificate_file.name,  # public part
+            'key_file': os.path.join(BASE_DIR, data.sp_key_file.name),  # private part
+            'cert_file': os.path.join(BASE_DIR, data.sp_certificate_file.name),  # public part
         }]
     }
 
