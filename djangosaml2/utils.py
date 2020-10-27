@@ -22,6 +22,10 @@ from django.utils.http import is_safe_url
 from django.utils.module_loading import import_string
 from saml2.s_utils import UnknownSystemEntity
 
+from datetime import timedelta
+from deming.time_utils import TimeUtils
+from twd_integration.models import QualityEventOccurrence, TwdQualityEvent
+
 
 def get_custom_setting(name, default=None):
     return getattr(settings, name, default)
@@ -116,3 +120,33 @@ def get_session_id_from_saml2(saml2_xml):
 def get_subject_id_from_saml2(saml2_xml):
     saml2_xml = saml2_xml if isinstance(saml2_xml, str) else saml2_xml.decode()
     re.findall('">([a-z0-9]+)</saml:NameID>', saml2_xml)[0]
+
+
+def build_redirect_url(relay_state):
+    """Builds Redirect URL from relay state.
+
+    Returns None if no matching data found or relative url(str)
+    to redirect to.
+    """
+    try:
+        eventOccurence = QualityEventOccurrence.objects.get(id=relay_state)
+    except (QualityEventOccurrence.DoesNotExist, ValueError):
+        eventOccurence = None
+    try:
+        qualityEvent = TwdQualityEvent.objects.get(id=relay_state)
+    except (TwdQualityEvent.DoesNotExist, ValueError):
+        qualityEvent = None
+    if eventOccurence:
+        asset_id = eventOccurence.rule_break.rule_definition.asset.id
+        end_data = TimeUtils.to_epoch(eventOccurence.rule_break.stop_time)
+        start_date = TimeUtils.to_epoch(eventOccurence.rule_break.start_time)
+        if eventOccurence.rule_break.rule_definition.product:
+            product = eventOccurence.rule_break.rule_definition.product.id 
+            return f'/quality/quality-events/?asset_id={asset_id}&end_date={end_data}&product={product}&start_date={start_date}&tab_id=quality-events'
+        return f'/quality/quality-events/?asset_id={asset_id}&end_date={end_data}&start_date={start_date}&tab_id=quality-events'
+    elif qualityEvent:
+        end_data = TimeUtils.to_epoch(qualityEvent.created_at + timedelta(days=1))
+        start_date = TimeUtils.to_epoch(qualityEvent.created_at)
+        product = qualityEvent.product.id
+        return f'/quality/quality-events/?end_date={end_data}&product={product}&start_date={start_date}&tab_id=quality-events'
+    return None
