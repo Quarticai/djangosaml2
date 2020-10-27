@@ -123,18 +123,19 @@ def get_subject_id_from_saml2(saml2_xml):
 
 
 def build_redirect_url(relay_state):
-    """Builds Redirect URL from relay state.
+    """Builds Redirect URL from relay state which holds
+    the value for external event ID.
 
     Returns None if no matching data found or relative url(str)
     to redirect to.
     """
     try:
-        eventOccurence = QualityEventOccurrence.objects.get(id=relay_state)
-    except (QualityEventOccurrence.DoesNotExist, ValueError):
+        eventOccurence = QualityEventOccurrence.objects.get(twd_event_id=relay_state)
+    except QualityEventOccurrence.DoesNotExist:
         eventOccurence = None
     try:
-        qualityEvent = TwdQualityEvent.objects.get(id=relay_state)
-    except (TwdQualityEvent.DoesNotExist, ValueError):
+        qualityEvent = TwdQualityEvent.objects.get(twd_event_id=relay_state)
+    except TwdQualityEvent.DoesNotExist:
         qualityEvent = None
     if eventOccurence:
         asset_id = eventOccurence.rule_break.rule_definition.asset.id
