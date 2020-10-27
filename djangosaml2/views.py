@@ -53,7 +53,7 @@ from .overrides import Saml2Client
 from .signals import post_authenticated
 from .utils import (available_idps, fail_acs_response, get_custom_setting,
                     get_idp_sso_supported_bindings, get_location,
-                    validate_referral_url)
+                    validate_referral_url, build_redirect_url)
 
 try:
     from django.contrib.auth.views import LogoutView
@@ -98,10 +98,9 @@ def login(request,
     """
     logger.debug('Login process started')
 
-    came_from = request.GET.get('next', settings.LOGIN_REDIRECT_URL)
-    if not came_from:
-        logger.warning('The next parameter exists but is empty')
-        came_from = settings.LOGIN_REDIRECT_URL
+    relay_state = request.GET.get('RelayState', None)
+    came_from = build_redirect_url(relay_state) if relay_state else settings.LOGIN_REDIRECT_URL
+
     came_from = validate_referral_url(request, came_from)
 
     # if the user is already authenticated that maybe because of two reasons:
@@ -408,8 +407,7 @@ class AssertionConsumerServiceView(View):
         For example, some sites may require user registration if the user has not
         yet been provisioned.
         """
-        return None
-
+        return build_redirect_url(relay_state)
 
 
 @login_required(login_url=settings.SAML_LOGIN_URL)
