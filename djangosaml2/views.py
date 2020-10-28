@@ -182,10 +182,10 @@ def login(request,
             logger.warning('IDP %s does not support %s,  trying %s',
                            selected_idp, binding, BINDING_HTTP_POST)
             binding = BINDING_HTTP_POST
-        # if switched binding still not supported, give up
-        if binding not in supported_bindings:
-            raise UnsupportedBinding('IDP %s does not support %s or %s',
-                                     selected_idp, BINDING_HTTP_POST, BINDING_HTTP_REDIRECT)
+    # if switched binding still not supported, give up
+    if binding not in supported_bindings:
+        raise UnsupportedBinding('IDP %s does not support %s or %s',
+                                 selected_idp, BINDING_HTTP_POST, BINDING_HTTP_REDIRECT)
 
     client = Saml2Client(conf)
     http_response = None

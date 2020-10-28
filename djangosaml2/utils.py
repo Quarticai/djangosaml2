@@ -116,8 +116,7 @@ def saml2_from_httpredirect_request(url):
     b64_inflated_saml2req = urllib.parse.parse_qs(urlquery)['SAMLRequest'][0]
 
     inflated_saml2req = base64.b64decode(b64_inflated_saml2req)
-    deflated_saml2req = zlib.decompress(inflated_saml2req, -15)
-    return deflated_saml2req
+    return zlib.decompress(inflated_saml2req, -15)
 
 def get_session_id_from_saml2(saml2_xml):
     saml2_xml = saml2_xml.encode() if isinstance(saml2_xml, str) else saml2_xml
