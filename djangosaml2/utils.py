@@ -23,11 +23,14 @@ from django.utils.http import is_safe_url
 from django.utils.module_loading import import_string
 from saml2.s_utils import UnknownSystemEntity
 
+logger = logging.getLogger('djangosaml2')
+
 from datetime import timedelta
 from deming.time_utils import TimeUtils
-from twd_integration.models import QualityEventOccurrence, TwdQualityEvent
-
-logger = logging.getLogger('djangosaml2')
+try:
+    from twd_integration.models import QualityEventOccurrence, TwdQualityEvent
+except RuntimeError:
+    logger.warning('TWD Module Not Found in installed APPs.')
 
 
 def get_custom_setting(name, default=None):
@@ -134,6 +137,9 @@ def build_redirect_url(relay_state):
     """
     try:
         eventOccurence = QualityEventOccurrence.objects.get(twd_event_id=relay_state)
+    except NameError as error: # Happens when Twd Models are not imported.
+        logger.warning(f"TWD Models not imported. {error}")
+        return None
     except QualityEventOccurrence.DoesNotExist:
         eventOccurence = None
     try:
@@ -152,6 +158,6 @@ def build_redirect_url(relay_state):
             start_date = TimeUtils.to_epoch(qualityEvent.created_at)
             product = qualityEvent.product.id
             return f'/quality/quality-events/?end_date={end_data}&product={product}&start_date={start_date}&currentStrategy=2&tab_id=quality-events'
-    except AttributeError as error:
+    except AttributeError as error: # Happens when product is Null(None) in rule_defintion
         logger.exception(f"Error in querying db. {error}")
     return None
