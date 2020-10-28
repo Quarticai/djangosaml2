@@ -98,9 +98,15 @@ def login(request,
     """
     logger.debug('Login process started')
 
+    # Checking the url query params for RelayState
     relay_state = request.GET.get('RelayState', None)
-    came_from = build_redirect_url(relay_state) if relay_state else settings.LOGIN_REDIRECT_URL
+    # Setting came_from if relay_state found else we are checking for the next parameter
+    # This is used in case the user is already authenticated or is going to authenticate
+    came_from = build_redirect_url(relay_state) if relay_state else request.GET.get('next', settings.LOGIN_REDIRECT_URL)
 
+    if not came_from:
+        logger.warning('The next parameter exists but is empty or came_from is None')
+        came_from = settings.LOGIN_REDIRECT_URL
     came_from = validate_referral_url(request, came_from)
 
     # if the user is already authenticated that maybe because of two reasons:
@@ -407,6 +413,7 @@ class AssertionConsumerServiceView(View):
         For example, some sites may require user registration if the user has not
         yet been provisioned.
         """
+        # Returning the redirect url built from the relay_state. If no data is found, None would be returned.
         return build_redirect_url(relay_state)
 
 
