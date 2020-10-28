@@ -77,6 +77,7 @@ def config_map(data):
         'service': {
             # we are just a lonely SP
             'sp': {
+                'allow_unsolicited': True,
                 # 'name': 'Federated Django sample SP',
                 'name_id_format': getattr(saml2.saml, data.name_id_format,
                                           saml2.saml.NAMEID_FORMAT_UNSPECIFIED),

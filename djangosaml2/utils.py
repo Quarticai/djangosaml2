@@ -15,12 +15,22 @@ import base64
 import re
 import urllib
 import zlib
+import logging
 
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 from django.utils.http import is_safe_url
 from django.utils.module_loading import import_string
 from saml2.s_utils import UnknownSystemEntity
+
+logger = logging.getLogger('djangosaml2')
+
+from datetime import timedelta
+from deming.time_utils import TimeUtils
+try:
+    from twd_integration.models import QualityEventOccurrence, TwdQualityEvent
+except RuntimeError:
+    logger.warning('TWD Module Not Found in installed APPs.')
 
 
 def get_custom_setting(name, default=None):
@@ -116,3 +126,38 @@ def get_session_id_from_saml2(saml2_xml):
 def get_subject_id_from_saml2(saml2_xml):
     saml2_xml = saml2_xml if isinstance(saml2_xml, str) else saml2_xml.decode()
     re.findall('">([a-z0-9]+)</saml:NameID>', saml2_xml)[0]
+
+
+def build_redirect_url(relay_state):
+    """Builds Redirect URL from relay state which holds
+    the value for external event ID.
+
+    Returns None if no matching data found or relative url(str)
+    to redirect to.
+    """
+    try:
+        eventOccurence = QualityEventOccurrence.objects.get(twd_event_id=relay_state)
+    except NameError as error: # Happens when Twd Models are not imported.
+        logger.warning(f"TWD Models not imported. {error}")
+        return None
+    except QualityEventOccurrence.DoesNotExist:
+        eventOccurence = None
+    try:
+        qualityEvent = TwdQualityEvent.objects.get(twd_event_id=relay_state)
+    except TwdQualityEvent.DoesNotExist:
+        qualityEvent = None
+    try:
+        if eventOccurence:
+            asset_id = eventOccurence.rule_break.rule_definition.asset.id
+            end_data = TimeUtils.to_epoch(eventOccurence.rule_break.stop_time)
+            start_date = TimeUtils.to_epoch(eventOccurence.rule_break.start_time)
+            product = eventOccurence.rule_break.rule_definition.product.id
+            return f'/quality/quality-events/?asset_id={asset_id}&end_date={end_data}&product={product}&start_date={start_date}&currentStrategy=1&tab_id=quality-events'
+        elif qualityEvent:
+            end_data = TimeUtils.to_epoch(qualityEvent.created_at + timedelta(days=1))
+            start_date = TimeUtils.to_epoch(qualityEvent.created_at)
+            product = qualityEvent.product.id
+            return f'/quality/quality-events/?end_date={end_data}&product={product}&start_date={start_date}&currentStrategy=2&tab_id=quality-events'
+    except AttributeError as error: # Happens when product is Null(None) in rule_defintion
+        logger.exception(f"Error in querying db. {error}")
+    return None
