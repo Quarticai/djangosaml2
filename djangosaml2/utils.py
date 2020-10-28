@@ -15,6 +15,7 @@ import base64
 import re
 import urllib
 import zlib
+import logging
 
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
@@ -25,6 +26,8 @@ from saml2.s_utils import UnknownSystemEntity
 from datetime import timedelta
 from deming.time_utils import TimeUtils
 from twd_integration.models import QualityEventOccurrence, TwdQualityEvent
+
+logger = logging.getLogger('djangosaml2')
 
 
 def get_custom_setting(name, default=None):
@@ -137,17 +140,18 @@ def build_redirect_url(relay_state):
         qualityEvent = TwdQualityEvent.objects.get(twd_event_id=relay_state)
     except TwdQualityEvent.DoesNotExist:
         qualityEvent = None
-    if eventOccurence:
-        asset_id = eventOccurence.rule_break.rule_definition.asset.id
-        end_data = TimeUtils.to_epoch(eventOccurence.rule_break.stop_time)
-        start_date = TimeUtils.to_epoch(eventOccurence.rule_break.start_time)
-        if eventOccurence.rule_break.rule_definition.product:
-            product = eventOccurence.rule_break.rule_definition.product.id 
-            return f'/quality/quality-events/?asset_id={asset_id}&end_date={end_data}&product={product}&start_date={start_date}&tab_id=quality-events'
-        return f'/quality/quality-events/?asset_id={asset_id}&end_date={end_data}&start_date={start_date}&tab_id=quality-events'
-    elif qualityEvent:
-        end_data = TimeUtils.to_epoch(qualityEvent.created_at + timedelta(days=1))
-        start_date = TimeUtils.to_epoch(qualityEvent.created_at)
-        product = qualityEvent.product.id
-        return f'/quality/quality-events/?end_date={end_data}&product={product}&start_date={start_date}&tab_id=quality-events'
+    try:
+        if eventOccurence:
+            asset_id = eventOccurence.rule_break.rule_definition.asset.id
+            end_data = TimeUtils.to_epoch(eventOccurence.rule_break.stop_time)
+            start_date = TimeUtils.to_epoch(eventOccurence.rule_break.start_time)
+            product = eventOccurence.rule_break.rule_definition.product.id
+            return f'/quality/quality-events/?asset_id={asset_id}&end_date={end_data}&product={product}&start_date={start_date}&currentStrategy=1&tab_id=quality-events'
+        elif qualityEvent:
+            end_data = TimeUtils.to_epoch(qualityEvent.created_at + timedelta(days=1))
+            start_date = TimeUtils.to_epoch(qualityEvent.created_at)
+            product = qualityEvent.product.id
+            return f'/quality/quality-events/?end_date={end_data}&product={product}&start_date={start_date}&currentStrategy=2&tab_id=quality-events'
+    except AttributeError as error:
+        logger.exception(f"Error in querying db. {error}")
     return None
