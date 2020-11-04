@@ -330,7 +330,7 @@ class AssertionConsumerServiceView(View):
             _exception = f'StatusNoAuthnContext: {errorMsg} \n {e}'
             logger.warning(errorMsg, exc_info=True)
         except MissingKey as e:
-            errorMsg = "SAML Identity Provider is not configured correctly:\n Metadata key value is missing or incorrect!"
+            errorMsg = "SAML Identity Provider is not configured correctly:\n Metadata file's attribute value is missing or incorrect!"
             _exception = f'MissingKey: {errorMsg} \n {e}'
             logger.exception(errorMsg)
         except UnsolicitedResponse as e:
