@@ -306,32 +306,37 @@ class AssertionConsumerServiceView(View):
                                                            BINDING_HTTP_POST,
                                                            outstanding_queries)
         except (StatusError, ToEarly) as e:
-            _exception = e
-            logger.exception("Error processing SAML Assertion.")
+            errorMsg = "Error processing SAML Assertion."
+            _exception = f'StatusError or ToEarly: {errorMsg} \n {e}. Check your IdP Issuer Event Logs.'
+            logger.exception(errorMsg)
         except ResponseLifetimeExceed as e:
-            _exception = e
-            logger.info(("SAML Assertion is no longer valid. "
-                         "Possibly caused by network delay or replay attack."),
-                         exc_info=True)
+            errorMsg = "SAML Assertion is no longer valid.\n Possibly caused by network delay or replay attack."
+            _exception = f'ResponseLifetimeExceed : {errorMsg} \n {e}'
+            logger.info(errorMsg, exc_info=True)
         except SignatureError as e:
-            _exception = e
-            logger.info("Invalid or malformed SAML Assertion.", exc_info=True)
+            errorMsg = "Invalid or malformed SAML Assertion."
+            _exception = f'SignatureError : {errorMsg} \n {e}'
+            logger.info(errorMsg, exc_info=True)
         except StatusAuthnFailed as e:
-            _exception = e
-            logger.info("Authentication denied for user by IdP.", exc_info=True)
+            errorMsg = "Authentication denied for user by IdP."
+            _exception = f'StatusAuthnFailed: {errorMsg} \n {e}'
+            logger.info(errorMsg, exc_info=True)
         except StatusRequestDenied as e:
-            _exception = e
-            logger.warning("Authentication interrupted at IdP.", exc_info=True)
+            errorMsg = "Authentication interrupted at IdP."
+            _exception = f'StatusRequestDenied: {errorMsg} \n {e}'
+            logger.warning(errorMsg, exc_info=True)
         except StatusNoAuthnContext as e:
-            _exception = e
-            logger.warning("Missing Authentication Context from IdP.", exc_info=True)
+            errorMsg = "Missing Authentication Context from IdP."
+            _exception = f'StatusNoAuthnContext: {errorMsg} \n {e}'
+            logger.warning(errorMsg, exc_info=True)
         except MissingKey as e:
-            _exception = e
-            logger.exception("SAML Identity Provider is not configured correctly: "
-                             "certificate key is missing!")
+            errorMsg = "SAML Identity Provider is not configured correctly:\n Metadata file's attribute value is missing or incorrect!"
+            _exception = f'MissingKey: {errorMsg} \n {e}'
+            logger.exception(errorMsg)
         except UnsolicitedResponse as e:
-            _exception = e
-            logger.exception("Received SAMLResponse when no request has been made.")
+            errorMsg = "Received SAMLResponse when no request has been made."
+            _exception = f'UnsolicitedResponse: {errorMsg} \n {e}'
+            logger.exception(errorMsg)
 
 
         if _exception:
