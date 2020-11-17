@@ -126,18 +126,18 @@ class Saml2Backend(ModelBackend):
             logger.error('Could not determine user identifier')
             return None
 
-        user, created = self.get_or_create_user(
+        user, created, assets = self.get_or_create_user(
             user_lookup_key, user_lookup_value, create_unknown_user,
             idp_entityid=idp_entityid, attributes=attributes, attribute_mapping=attribute_mapping, request=request
         )
 
         # Update user with new attributes from incoming request
         if user is not None:
-            user = self._update_user(user, attributes, attribute_mapping, force_save=created)
+            user = self._update_user(user, attributes, attribute_mapping, force_save=created, assets=assets)
 
         return user
 
-    def _update_user(self, user, attributes, attribute_mapping, force_save=False):
+    def _update_user(self, user, attributes, attribute_mapping, force_save=False, assets=None):
         """ Update a user with a set of attributes and returns the updated user.
 
             By default it uses a mapping defined in the settings constant
@@ -177,6 +177,8 @@ class Saml2Backend(ModelBackend):
         if user_modified or signal_modified or force_save:
             user.save()
             logger.debug('User updated with incoming attributes')
+        if assets:
+            user.assets.add(*assets)
 
         return user
 
@@ -212,21 +214,21 @@ class Saml2Backend(ModelBackend):
         }
 
         # Lookup existing user
-        # Lookup existing user
         user, created = None, False
+        org_group = OrganisationGroup.objects.first()
+        assets = org_group.client.assets()
+
         try:
             user = UserModel.objects.get(**user_query_args)
+            user.assets.add(*assets)
         except MultipleObjectsReturned:
             logger.error("Multiple users match, model: %s, lookup: %s", UserModel._meta, user_query_args)
         except UserModel.DoesNotExist:
             # Create new one if desired by settings
-
-            org_group = OrganisationGroup.objects.first()
-
             # TODO: Change the lookup key.
             if create_unknown_user:
                 user = UserModel(**{ user_lookup_key: user_lookup_value,
-                                     'organisation_group': OrganisationGroup.objects.first(),
+                                     'organisation_group': org_group,
                                      'client': org_group.client
                                      })
                 created = True
@@ -234,7 +236,7 @@ class Saml2Backend(ModelBackend):
             else:
                 logger.error('The user does not exist, model: %s, lookup: %s', UserModel._meta, user_query_args)
 
-        return user, created
+        return user, created, assets
 
     def send_user_update_signal(self, user: settings.AUTH_USER_MODEL, attributes: dict, user_modified: bool) -> bool:
         """ Send out a pre-save signal after the user has been updated with the SAML attributes.
