@@ -1,3 +1,5 @@
+#!groovy
+
 @Library('shared-library') _
 import quarticpipeline.PipelineBuilder
 
