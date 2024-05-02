@@ -25,6 +25,9 @@ clean: clean-dist clean-cache
 build: clean
 	python3 setup.py bdist_wheel
 
+obfuscate:
+	./code_obfuscation.py
+
 version:
 	@echo $(VERSION)
 
