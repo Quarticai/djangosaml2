@@ -15,6 +15,6 @@ containerNodes = [
 ]
 
 pipelineBuilder = new PipelineBuilder(this, env, scm, containerNodes)
-userEnv = ['RESERVE=azubuntu']
+userEnv = ['RESERVE=azubuntu','MAKE_OBFUSCATE=true','OBFUSCATE_DIR=../djangosaml2-obfuscated']
 
 pipelineBuilder.executePipeline(userEnv)
